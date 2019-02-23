@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto-iot
+  namespace: long
+  labels:
+    app: auto-home
+spec:
+  selector:
+    matchLabels:
+      app: auto-home
+      tier: mqtt-broker
+  template:
+    metadata:
+      labels:
+        app: auto-home
+        tier: mqtt-broker
+    spec:
+      containers:
+      - image: eclipse-mosquitto:latest
+        name: mosquitto
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 200m
+            memory: 300Mi
+          limits:
+            cpu: 500m
+            memory: 500Mi
+        ports:
+        - containerPort: 1883
+          name: mqtt
+        - containerPort: 9001
+          name: websocket
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto-iot
+  namespace: long
+  labels:
+    app: auto-home
+spec:
+  ports:
+    - port: 1883
+      name: mqtt
+    - port: 9001
+      name: websocket
+  selector:
+    app: auto-home
+    tier: mqtt-broker

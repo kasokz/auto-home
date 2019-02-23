@@ -1,19 +1,27 @@
 #include <ESP8266WiFi.h> //https://github.com/esp8266/Arduino
 
-const char *ssid = "TimLong";
-const char *password = "2109199210101992";
+#define XSTR(x) #x
+#define STR(x) XSTR(x)
+
+const char *ssid = STR(SSID);
+const char *password = STR(PASS);
 
 WiFiServer server(80);
 
 String header;
 
 String ledState = "off";
+String switchState = "off";
+
+int SWITCH_PIN = 5;
 
 void setup()
 {
   Serial.begin(115200);
+  pinMode(SWITCH_PIN, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(SWITCH_PIN, LOW);
   Serial.print("Connecting to ");
   Serial.println(ssid);
   WiFi.begin(ssid, password);
@@ -71,6 +79,20 @@ void loop()
               digitalWrite(LED_BUILTIN, LOW);
             }
 
+            // turns the GPIOs on and off
+            if (header.indexOf("GET /1/on") >= 0)
+            {
+              Serial.println("GPIO 1 on");
+              switchState = "on";
+              digitalWrite(SWITCH_PIN, HIGH);
+            }
+            else if (header.indexOf("GET /1/off") >= 0)
+            {
+              Serial.println("GPIO 1 off");
+              switchState = "off";
+              digitalWrite(SWITCH_PIN, LOW);
+            }
+
             // Display the HTML web page
             client.println("<!DOCTYPE html><html>");
             client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
@@ -85,8 +107,8 @@ void loop()
             // Web Page Heading
             client.println("<body><h1>ESP8266 Web Server</h1>");
 
-            // Display current state, and ON/OFF buttons for GPIO 5
-            client.println("<p>GPIO 5 - State " + ledState + "</p>");
+            // Display current state, and ON/OFF buttons for GPIO 16
+            client.println("<p>GPIO 16 - State " + ledState + "</p>");
             // If the output5State is off, it displays the ON button
             if (ledState == "off")
             {
@@ -95,6 +117,16 @@ void loop()
             else
             {
               client.println("<p><a href=\"/16/off\"><button class=\"button button2\">OFF</button></a></p>");
+            }
+             // Display current state, and ON/OFF buttons for GPIO 1
+            client.println("<p>GPIO 1 - State " + switchState + "</p>");
+            if (switchState == "off")
+            {
+              client.println("<p><a href=\"/1/on\"><button class=\"button\">ON</button></a></p>");
+            }
+            else
+            {
+              client.println("<p><a href=\"/1/off\"><button class=\"button button2\">OFF</button></a></p>");
             }
             client.println("</body></html>");
 
